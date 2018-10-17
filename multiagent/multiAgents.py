@@ -45,7 +45,7 @@ class ReflexAgent(Agent):
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
-        chosenIndex = random.choice(bestIndices) # Pick randomly among the best
+        chosenIndex = random.choice(bestIndices) #Pick randomly among the best
 
         "Add more of your code here if you want to"
 
@@ -67,6 +67,8 @@ class ReflexAgent(Agent):
         to create a masterful evaluation function.
         """
         # Useful information you can extract from a GameState (pacman.py)
+
+
         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
@@ -74,7 +76,27 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        WEIGHT_FOOD = 10.0
+        WEIGHT_GHOST = 10.0
+
+        value = successorGameState.getScore()
+
+
+        distanceToGhost = manhattanDistance(newPos, newGhostStates[0].getPosition())
+        if distanceToGhost > 0:
+            value -= WEIGHT_GHOST / distanceToGhost
+
+        distancesToFood = [manhattanDistance(newPos, x) for x in newFood.asList()]
+        if len(distancesToFood):
+            value += WEIGHT_FOOD / min(distancesToFood)
+
+        # if action == Directions.STOP and distanceToGhost > 0:
+        #     distancesToFood = [manhattanDistance(newPos, x) for x in newFood.asList()]
+        #     if len(distancesToFood):
+        #         value += WEIGHT_FOOD / min(distancesToFood)
+
+        return value
+        #return successorGameState.getScore()
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -106,6 +128,17 @@ class MultiAgentSearchAgent(Agent):
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
+        # is this a terminal state
+    def isTerminal(self, state, depth, agent):
+        return depth == self.depth or \
+                state.isWin() or \
+                state.isLose() or \
+                state.getLegalActions(agent) == 0
+
+    # is this agent pacman
+    def isPacman(self, state, agent):
+        return agent % state.getNumAgents() == 0
+
 class MinimaxAgent(MultiAgentSearchAgent):
     """
       Your minimax agent (question 2)
@@ -129,7 +162,25 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        def minimax(state, depth, agent):
+            if agent == state.getNumAgents():  # is pacman
+                return minimax(state, depth + 1, 0)  # start next depth
+
+            if self.isTerminal(state, depth, agent):
+                return self.evaluationFunction(state)  # return evaluation for bottom states
+
+            # find the "best" (min or max) state of the successors
+            successors = (
+                minimax(state.generateSuccessor(agent, action), depth, agent + 1)
+                for action in state.getLegalActions(agent)
+            )
+            return (max if self.isPacman(state, agent) else min)(successors)
+
+            # return the best of pacman's possible moves
+
+        return max(gameState.getLegalActions(0),key=lambda x: minimax(gameState.generateSuccessor(0, x), 0, 1))
+        #util.raiseNotDefined()
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
