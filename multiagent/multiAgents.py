@@ -83,16 +83,15 @@ class ReflexAgent(Agent):
 
         score = successorGameState.getScore()
 
-        # Calculating distance to ghost for all foods and assigning score based on weight
-        ghostDistance = manhattanDistance(newPos, newGhostStates[0].getPosition())
-        if ghostDistance > 0:
-            score -= ghostWeight / ghostDistance
-
-        #Calculating distance to food for all foods and assigning score based on weight
+        # Calculating distance to food for all foods and assigning score based on weight
         foodDistance = [manhattanDistance(newPos, x) for x in newFood.asList()]
         if len(foodDistance):
             score += foodWeight / min(foodDistance)
 
+        # Calculating distance to ghost for all foods and assigning score based on weight
+        ghostDistance = manhattanDistance(newPos, newGhostStates[0].getPosition())
+        if ghostDistance > 0:
+            score -= ghostWeight / ghostDistance
 
 
         return score
@@ -163,23 +162,40 @@ class MinimaxAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
 
-        def minimax(state, depth, agent):
-            if agent == state.getNumAgents():  # is pacman
-                return minimax(state, depth + 1, 0)  # start next depth
+        best_score, best_move = self.maxFunction(gameState, self.depth)
 
-            if self.isTerminal(state, depth, agent):
-                return self.evaluationFunction(state)  # return evaluation for bottom states
+        return best_move
 
-            # find the "best" (min or max) state of the successors
-            successors = (
-                minimax(state.generateSuccessor(agent, action), depth, agent + 1)
-                for action in state.getLegalActions(agent)
-            )
-            return (max if self.isPacman(state, agent) else min)(successors)
+    #function to choose the move based on max score
+    def maxFunction(self, gameState, depth):
+        #no moves
+        if depth == 0 or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState), "noMove"
 
-         # return the best of pacman's possible moves
-        return max(gameState.getLegalActions(0), key=lambda x: minimax(gameState.generateSuccessor(0, x), 0, 1))
-        #util.raiseNotDefined()
+        moves = gameState.getLegalActions()
+        #min score of all the moves
+        scores = [self.minFunction(gameState.generateSuccessor(self.index, move), 1, depth) for move in moves]
+
+        #choosing the max score
+        bestScore = max(scores)
+        bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+        chosenIndex = bestIndices[0]
+        return bestScore, moves[chosenIndex]
+
+    # function to return  min score and moves
+    def minFunction(self, gameState, agent, depth):
+        if depth == 0 or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState), "noMove"
+        moves = gameState.getLegalActions(agent)
+        if (agent != gameState.getNumAgents() - 1):
+            scores = [self.minFunction(gameState.generateSuccessor(agent, move), agent + 1, depth) for move in moves]
+        else:
+            scores = [self.maxFunction(gameState.generateSuccessor(agent, move), (depth - 1))[0] for move in moves]
+        minScore = min(scores)
+        worstIndices = [index for index in range(len(scores)) if scores[index] == minScore]
+        chosenIndex = worstIndices[0]
+        return minScore, moves[chosenIndex]
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
