@@ -260,26 +260,28 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         "*** YOUR CODE HERE ***"
         #util.raiseNotDefined()
         def expectimax(state, depth, agent):
-            if agent == state.getNumAgents():  # is pacman
-                return expectimax(state, depth + 1, 0)  # start next depth
+            if agent == state.getNumAgents():
+                return expectimax(state, depth + 1, 0)
 
             if self.isTerminal(state, depth, agent):
-                return self.evaluationFunction(state)  # return evaluation for bottom states
+                return self.evaluationFunction(state)
 
-            successors = [
+            scores = [
                 expectimax(state.generateSuccessor(agent, action), depth, agent + 1)
                 for action in state.getLegalActions(agent)
             ]
 
-            # for pacman, find the best move
+            print("scores :", scores)
+
+            #for pacman find the best move i.e. max score
             if self.isPacman(state, agent):
-                return max(successors)
+                return max(scores)
 
-            # we don't know what the ghost is going to do, so average out all of their moves
+            #take average of all ghost move scores as we don't know how will the ghost perform
             else:
-                return sum(successors) / len(successors)
+                return sum(scores) / len(scores)
 
-        # return the best of pacman's possible moves
+        #return the pacman's move that has best score
         return max(gameState.getLegalActions(0),
                    key=lambda x: expectimax(gameState.generateSuccessor(0, x), 0, 1)
                    )
