@@ -271,8 +271,6 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                 for action in state.getLegalActions(agent)
             ]
 
-            print("scores :", scores)
-
             #for pacman find the best move i.e. max score
             if self.isPacman(state, agent):
                 return max(scores)
