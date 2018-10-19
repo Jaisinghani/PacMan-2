@@ -84,7 +84,7 @@ class ReflexAgent(Agent):
         score = successorGameState.getScore()
 
         # Calculating distance to food for all foods and assigning score based on weight
-        foodDistance = [manhattanDistance(newPos, x) for x in newFood.asList()]
+        foodDistance = [manhattanDistance(newPos, food) for food in newFood.asList()]
         if len(foodDistance):
             score += foodWeight / min(foodDistance)
 
@@ -300,30 +300,32 @@ def betterEvaluationFunction(currentGameState):
     newGhostStates = currentGameState.getGhostStates()
     newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-    WEIGHT_FOOD = 10.0
-    WEIGHT_GHOST = 10.0
-    WEIGHT_EDIBLE_GHOST = 100.0
+    foodWeight = 10.0
+    ghostWeight = 10.0
+    scaredGhostWeight = 100.0
 
-    # use game score to penalize moves (1 move = -1 score)
-    value = currentGameState.getScore()
 
-    # distance to ghosts
-    ghostValue = 0
+    score = currentGameState.getScore()
+
+    #distance to ghosts
+    ghostScore = 0
     for ghost in newGhostStates:
         distance = manhattanDistance(newPos, newGhostStates[0].getPosition())
         if distance > 0:
-            if ghost.scaredTimer > 0:  # if ghost is scared -> go for him
-                ghostValue += WEIGHT_EDIBLE_GHOST / distance
-            else:  # otherwise -> run!
-                ghostValue -= WEIGHT_GHOST / distance
-    value += ghostValue
+            #if the ghost is scared go towards it
+            if ghost.scaredTimer > 0:
+                ghostScore += scaredGhostWeight / distance
+            #if the ghost is not scared run
+            else:
+                ghostScore -= ghostWeight / distance
+    score += ghostScore
 
-    # distance to closest food
-    distancesToFood = [manhattanDistance(newPos, x) for x in newFood.asList()]
-    if len(distancesToFood):
-        value += WEIGHT_FOOD / min(distancesToFood)
+    #distance to food
+    foodDistance = [manhattanDistance(newPos, food) for food in newFood.asList()]
+    if len(foodDistance):
+        score += foodWeight / min(foodDistance)
 
-    return value
+    return score
 
 # Abbreviation
 better = betterEvaluationFunction
