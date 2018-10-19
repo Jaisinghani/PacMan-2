@@ -208,40 +208,41 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         #util.raiseNotDefined()
-        def dispatch(state, depth, agent, A=float("-inf"), B=float("inf")):
-            if agent == state.getNumAgents():  # next depth
+        def abPruning(state, depth, agent, alpha=float("-inf"), beta=float("inf")):
+            if agent == state.getNumAgents():
                 depth += 1
                 agent = 0
 
-            if self.isTerminal(state, depth, agent):  # dead end
+            if self.isTerminal(state, depth, agent):
                 return self.evaluationFunction(state), None
 
+            # if the agent is pacman then initialize max value to - infinity else min value to + infinity
             if self.isPacman(state, agent):
-                return getValue(state, depth, agent, A, B, float('-inf'), max)
+                return getValue(state, depth, agent, alpha, beta, float('-inf'), max)
             else:
-                return getValue(state, depth, agent, A, B, float('inf'), min)
+                return getValue(state, depth, agent, alpha, beta, float('inf'), min)
 
-        def getValue(state, depth, agent, A, B, ms, mf):
-            bestScore = ms
+        def getValue(state, depth, agent, alpha, beta, max_min_score, max_min_function):
+            bestScore = max_min_score
             bestAction = None
 
             for action in state.getLegalActions(agent):
                 successor = state.generateSuccessor(agent, action)
-                score, _ = dispatch(successor, depth, agent + 1, A, B)
-                bestScore, bestAction = mf((bestScore, bestAction), (score, action))
+                score, _ = abPruning(successor, depth, agent + 1, alpha, beta)
+                bestScore, bestAction = max_min_function((bestScore, bestAction), (score, action))
 
                 if self.isPacman(state, agent):
-                    if bestScore > B:
+                    if bestScore > beta:
                         return bestScore, bestAction
-                    A = mf(A, bestScore)
+                    alpha = max_min_function(alpha, bestScore)
                 else:
-                    if bestScore < A:
+                    if bestScore < alpha:
                         return bestScore, bestAction
-                    B = mf(B, bestScore)
+                    beta = max_min_function(beta, bestScore)
 
             return bestScore, bestAction
 
-        _, action = dispatch(gameState, 0, 0)
+        _, action = abPruning(gameState, 0, 0)
         return action
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
